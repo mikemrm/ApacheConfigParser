@@ -20,9 +20,9 @@ if not hasattr(shlex, 'quote'):
 	setattr(shlex, 'quote', quote)
 
 match_comment = re.compile(br'^\s*#\s*(.*)$')
-match_statement = re.compile(br'^\s*[^\s<]+\s*.*$')
-match_section_start = re.compile(br'^\s*<([^\s]+)(\s+)(.*)>$')
-match_section_end = re.compile(br'^\s*<\/([^\s]+).*>$')
+match_statement = re.compile(br'^\s*[^<\s]+\s*.*$')
+match_section_start = re.compile(br'^\s*<([^\s]+)(\s+)(.*)>\s*$')
+match_section_end = re.compile(br'^\s*<\/([^\s]+).*>\s*$')
 match_line_endings = re.compile(br"\r?\n")
 
 class ApacheParseException(Exception): pass
@@ -228,7 +228,6 @@ class ApacheRoot(ApacheSection):
 
 def configBuilder(config, parent = None):
 	parent = ApacheRoot() if parent == None else parent
-	print(config['type'])
 	if config['type'] == 'root' and parent.__class__ == ApacheRoot:
 		for child in config['children']:
 			configBuilder(child, parent)
