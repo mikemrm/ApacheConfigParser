@@ -278,7 +278,7 @@ class ApacheParser:
 
 	def render(self, item = None):
 		item = self.root if not item else item
-		return bytes("\n".join(self.renderLines(item)), 'UTF-8')
+		return "\n".join(self.renderLines(item)).encode('utf-8')
 
 if __name__ == '__main__':
 	import sys
