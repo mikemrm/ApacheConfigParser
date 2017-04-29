@@ -79,31 +79,15 @@ class ApacheItem(object):
 		return None
 
 	def update(self, *values, **kwargs):
-		replace_all = kwargs.pop('replace_all', False)
 		return self
 
 	def __str__(self):
-		return self.line
+		return self.line.strip().decode('utf-8')
 
 	def __repr__(self):
 		return '<%s @ Line %d>' % (self.__class__.__name__, self.index)
 
-class ApacheEmptyLine(object):
-	def __init__(self, index):
-		self.index = index
-
-	def matches(self, name, *arguments):
-		return None
-
-	def update(self, *values, **kwargs):
-		replace_all = kwargs.pop('replace_all', False)
-		return self
-
-	def __str__(self):
-		return ''
-
-	def __repr__(self):
-		return '<%s>' % (self.__class__.__name__,)
+class ApacheEmptyLine(ApacheItem): pass
 
 class ApacheComment(ApacheItem):
 	def __init__(self, line, parent, file, index):
@@ -122,7 +106,6 @@ class ApacheComment(ApacheItem):
 			return True
 
 	def update(self, *values, **kwargs):
-		replace_all = kwargs.pop('replace_all', False)
 		self.comment = ' '.join(values)
 		return self
 
@@ -230,7 +213,7 @@ class ApacheParser:
 		elif re.match(match_section_end, line):
 			return None
 		elif not line.strip():
-			return ApacheEmptyLine(self.index)
+			return ApacheEmptyLine(line, self.path[-1], self.file, self.index)
 		else:
 			raise ApacheParseException('Failed to parse %s at line %d' % (self.file, self.index))
 
@@ -283,16 +266,21 @@ class ApacheParser:
 
 if __name__ == '__main__':
 	import sys
-	if len(sys.argv) > 2 and len(sys.argv) <= 5:
+	if len(sys.argv) > 1 and len(sys.argv) <= 5:
 		input_file = open(sys.argv[1], 'rb')
 		parsed = ApacheParser(input_file)
 		input_file.close()
-		search_items = sys.argv[2].split('.')
-		last_item_name = search_items[-1]
-		current_value = sys.argv[3] if len(sys.argv) >= 4 else None
-		new_value = sys.argv[4] if len(sys.argv) == 5 else None
-		last_items = parsed.findAll(search_items[0])
-		del search_items[0]
+		search_items = []
+		last_items = [parsed.root]
+		current_value = None
+		new_value = None
+		if len(sys.argv) > 2:
+			search_items = sys.argv[2].split('.')
+			last_item_name = search_items[-1]
+			current_value = sys.argv[3] if len(sys.argv) >= 4 else None
+			new_value = sys.argv[4] if len(sys.argv) == 5 else None
+			last_items = parsed.findAll(search_items[0])
+			del search_items[0]
 		for item in search_items:
 			last_items = last_items.findChildren(item)
 		if current_value:
