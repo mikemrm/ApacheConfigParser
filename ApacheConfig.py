@@ -11,6 +11,26 @@ match_line_endings = re.compile(br"\r?\n")
 
 class ApacheParseException(Exception): pass
 
+class ApacheItemList(list):
+	def find(self, name):
+		for i in self:
+			i_class = i.__class__
+			if i_class in [ApacheSection, ApacheRoot] and i.name.lower() == name.lower():
+				return i
+			elif i_class == ApacheStatement and i.module.lower() == name.lower():
+				return i
+	def findAll(self, name):
+		found = self.__class__()
+		for i in self:
+			i_class = i.__class__
+			if i_class in [ApacheSection, ApacheRoot] and i.name.lower() == name.lower():
+				found.append(i)
+			elif i_class == ApacheStatement and i.module.lower() == name.lower():
+				found.append(i)
+		return found
+
+
+
 class ApacheItem(object):
 	def __init__(self, line, parent, file, index):
 		self.line = line
@@ -75,7 +95,7 @@ class ApacheSection(ApacheItem):
 		super(ApacheSection, self).__init__(line, parent, file, index)
 		self.name = None
 		self.arguments = None
-		self.children = []
+		self.children = ApacheItemList()
 		self.parse()
 
 	def parse(self):
@@ -87,19 +107,11 @@ class ApacheSection(ApacheItem):
 			if parts.group(3):
 				self.arguments = shlex.split(parts.group(3).decode('utf-8'))
 
-	def getChild(self, name):
-		for child in self.children:
-			if child.name.lower() == name.lower():
-				return child
+	def find(self, name):
+		return self.children.find(name)
 
-	def getAllChildren(self, name = None):
-		if not name:
-			return self.children
-		children = []
-		for child in self.children:
-			if child.name.lower() == name.lower():
-				children.append(child)
-		return children
+	def findAll(self, name):
+		return self.children.findAll(name)
 
 	def newChild(self, i):
 		self.children.append(i)
@@ -155,12 +167,18 @@ class ApacheParser:
 			line = self.file.readline()
 		return self.root
 
+	def find(self, name):
+		return self.root.find(name)
+
+	def findAll(self, name):
+		return self.root.findAll(name)
+
 	def parse(self):
 		return self.parseFile()
 
-
 	def renderIndent(self, indent):
 		return (' ' * self.indent_size) * indent
+
 	def renderLines(self, item, indent = 0):
 		item_class = item.__class__
 		isRoot = item_class == ApacheRoot
@@ -179,4 +197,4 @@ class ApacheParser:
 		return output_lines
 
 	def render(self):
-		return "\n".join(self.renderLines(self.root))
+		return bytes("\n".join(self.renderLines(self.root)), 'UTF-8')
