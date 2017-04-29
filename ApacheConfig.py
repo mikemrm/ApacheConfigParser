@@ -1,4 +1,7 @@
 import re, shlex
+
+__all__ = ['ApacheParser', 'ApacheRoot', 'ApacheSection', 'ApacheStatement', 'ApacheComment', 'ApacheEmptyLine', 'ApacheItem', 'ApacheItemList']
+
 if not hasattr(shlex, 'quote'):
 	if not hasattr(re, 'ASCII'):
 		setattr(re, 'ASCII', 256)
@@ -15,8 +18,6 @@ if not hasattr(shlex, 'quote'):
 		# the string $'b is then quoted as '$'"'"'b'
 		return "'" + s.replace("'", "'\"'\"'") + "'"
 	setattr(shlex, 'quote', quote)
-
-APACHE_ROOT = 'APACHE_SECTION_ROOT'
 
 match_comment = re.compile(br'^\s*#\s*(.*)$')
 match_statement = re.compile(br'^\s*[^\s<]+\s*.*$')
